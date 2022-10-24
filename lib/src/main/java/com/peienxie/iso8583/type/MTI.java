@@ -2,6 +2,8 @@ package com.peienxie.iso8583.type;
 
 import com.peienxie.iso8583.util.StringUtils;
 
+import java.text.ParseException;
+
 /** MTI (Message Type Identifier) is a ISO8583 message type */
 public class MTI {
     private final boolean isBinary;
@@ -35,5 +37,24 @@ public class MTI {
     public byte[] getBytes() {
         byte[] bytes = {(byte) ((this.value >>> 8) & 0xff), (byte) (value & 0xff)};
         return isBinary ? bytes : StringUtils.bytesToHexStr(bytes).getBytes();
+    }
+
+    public MTI parse(byte[] bytes) throws ParseException {
+        int expectLength = isBinary ? 2 : 4;
+
+        if (bytes.length < expectLength) {
+            // TODO: figure out how to determine the errorOffset
+            throw new ParseException(
+                    "input length " + bytes.length + " is less than expect " + expectLength, 0);
+        }
+
+        int val;
+        if (isBinary) {
+            val = bytes[0] << 8 | bytes[1];
+        } else {
+            byte[] tmp = StringUtils.hexStrToBytes(new String(bytes));
+            val = tmp[0] << 8 | tmp[1];
+        }
+        return MTI.of(val);
     }
 }

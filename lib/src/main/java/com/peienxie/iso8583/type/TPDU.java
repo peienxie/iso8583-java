@@ -2,6 +2,8 @@ package com.peienxie.iso8583.type;
 
 import com.peienxie.iso8583.util.StringUtils;
 
+import java.text.ParseException;
+
 /** TPDU (Transaction Protocol Data Unit) is a ISO8583 header */
 public class TPDU {
     private final boolean isBinary;
@@ -20,6 +22,11 @@ public class TPDU {
         return new TPDU(dst, 0, true);
     }
 
+    /** creates TPDU by given destination and source addresses which shoule be a base 16 integer */
+    public static TPDU of(int dst, int src) {
+        return new TPDU(dst, src, true);
+    }
+
     /**
      * creates a TPDU by given destination and source addresses which should be a base 16 integer.
      * if isBinary set to true, when getBytes() is called this object will format as binary type
@@ -28,7 +35,6 @@ public class TPDU {
     public static TPDU of(int dst, int src, boolean isBinary) {
         return new TPDU(dst, src, isBinary);
     }
-
     /**
      * converts this TPDU data into a byte array with following Format. the actual length of output
      * data is depends on isBinary field.
@@ -48,5 +54,26 @@ public class TPDU {
             (byte) (this.src & 0xff)
         };
         return isBinary ? bytes : StringUtils.bytesToHexStr(bytes).getBytes();
+    }
+
+    public TPDU parse(byte[] bytes) throws ParseException {
+        int expectLength = isBinary ? 5 : 10;
+
+        if (bytes.length < expectLength) {
+            // TODO: figure out how to determine the errorOffset
+            throw new ParseException(
+                    "input length " + bytes.length + " is less than expect " + expectLength, 0);
+        }
+
+        int dst, src;
+        if (isBinary) {
+            dst = bytes[1] << 8 | bytes[2];
+            src = bytes[3] << 8 | bytes[4];
+        } else {
+            byte[] tmp = StringUtils.hexStrToBytes(new String(bytes));
+            dst = tmp[1] << 8 | tmp[2];
+            src = tmp[3] << 8 | tmp[4];
+        }
+        return TPDU.of(dst, src);
     }
 }
