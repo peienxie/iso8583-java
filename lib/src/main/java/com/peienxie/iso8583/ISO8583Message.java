@@ -36,9 +36,8 @@ public class ISO8583Message {
                 try {
                     this.fields[i].writeTo(out);
                 } catch (IOException e) {
-                    e.printStackTrace();
                     throw new IllegalStateException(
-                            "should never happand when write to a ByteArrayOutputStream.");
+                            "should never happand when write to a ByteArrayOutputStream.", e);
                 }
             }
         }
@@ -53,9 +52,8 @@ public class ISO8583Message {
             out.write(createBitmap());
             out.write(fieldsToBytes());
         } catch (IOException e) {
-            e.printStackTrace();
             throw new IllegalStateException(
-                    "should never happand when write to a ByteArrayOutputStream.");
+                    "should never happand when write to a ByteArrayOutputStream.", e);
         }
         return out.toByteArray();
     }
